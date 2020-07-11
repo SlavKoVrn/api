@@ -4,7 +4,7 @@ namespace app\commands;
 
 use yii\console\Controller;
 use yii\console\ExitCode;
-use app\models\Authors;
+use app\modules\api\models\Authors;
 use yii\db\Migration;
 
 class InputController extends Controller
