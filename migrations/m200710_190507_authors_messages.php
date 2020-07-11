@@ -39,6 +39,7 @@ class m200710_190507_authors_messages extends Migration
      */
     public function safeDown()
     {
+        $this->dropIndex('idx_authors_phone', '{{%authors}}');
         $this->dropIndex('idx_messages_author_id', '{{%messages}}');
 
         $this->dropTable('{{%messages}}');
