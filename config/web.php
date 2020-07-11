@@ -56,6 +56,7 @@ $config = [
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
+                '/'=>'site/index',
                 'api/webhook'=>'api/webhook/index',
                 [
                     'class'         => 'yii\rest\UrlRule',
