@@ -115,7 +115,7 @@ class MessagesController extends \yii\rest\ActiveController
 }
 ```
 ~~~
-/modules/api/controllers/MessagesController.php
+/modules/api/controllers/AuthorsController.php
 ~~~
 
 ```php
