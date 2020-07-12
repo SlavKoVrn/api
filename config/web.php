@@ -53,15 +53,21 @@ $config = [
         'db' => $db,
         'urlManager' => [
             'enablePrettyUrl' => true,
-            'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                '/'=>'site/index',
                 'api/webhook'=>'api/webhook/index',
                 [
                     'class'         => 'yii\rest\UrlRule',
-                    'controller'    => ['api/messages','api/authors'],
+                    'controller'    => ['api/authors'],
                     'pluralize'     => false,
+                ],
+                [
+                    'class'         => 'yii\rest\UrlRule',
+                    'controller'    => ['api/messages'],
+                    'pluralize'     => false,
+                    'extraPatterns' => [
+                        'GET /'  => 'index',
+                    ],
                 ],
                 [
                     'class'         => 'yii\rest\UrlRule',
