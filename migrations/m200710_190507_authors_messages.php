@@ -12,6 +12,11 @@ class m200710_190507_authors_messages extends Migration
      */
     public function safeUp()
     {
+        $tableOptions = null;
+        if ($this->db->driverName === 'mysql') {
+            $tableOptions = 'CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE=InnoDB';
+        }
+
         $this->createTable('{{%authors}}', [
             'id'                     => $this->primaryKey(),
             'phone'                  => $this->string(50),
@@ -19,7 +24,7 @@ class m200710_190507_authors_messages extends Migration
             'datetime_last_message'  => $this->dateTime(),
             'messages_count'         => $this->integer(),
             'is_banned'              => $this->boolean(),
-        ]);
+        ],$tableOptions);
 
         $this->createIndex('idx_authors_phone', '{{%authors}}', 'phone');
 
@@ -29,7 +34,7 @@ class m200710_190507_authors_messages extends Migration
             'datetime'               => $this->dateTime(),
             'content'                => $this->text(),
             'is_deleted'             => $this->boolean(),
-        ]);
+        ],$tableOptions);
 
         $this->createIndex('idx_messages_author_id', '{{%messages}}', 'author_id');
     }
