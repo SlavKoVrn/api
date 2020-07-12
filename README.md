@@ -1,231 +1,197 @@
 <p align="center">
-    <a href="https://github.com/yiisoft" target="_blank">
+    <a href="http://api.kadastrcard.ru" target="_blank">
         <img src="https://avatars0.githubusercontent.com/u/993323" height="100px">
     </a>
-    <h1 align="center">Yii 2 Basic Project Template</h1>
+    <h1 align="center">Yii 2 API RESTfull</h1>
     <br>
 </p>
 
-Yii 2 Basic Project Template is a skeleton [Yii 2](http://www.yiiframework.com/) application best for
-rapidly creating small projects.
-
-The template contains the basic features including user login/logout and a contact page.
-It includes all commonly used configurations that would allow you to focus on adding new
-features to your application.
-
 Demo is at [api.kadastrcard.ru](http://api.kadastrcard.ru)
 
-DIRECTORY STRUCTURE
+### 1. Таблицы задания
 -------------------
 
-      assets/             contains assets definition
-      commands/           contains console commands (controllers)
-      config/             contains application configurations
-      controllers/        contains Web controller classes
-      mail/               contains view files for e-mails
-      models/             contains model classes
-      runtime/            contains files generated during runtime
-      tests/              contains various tests for the basic application
-      vendor/             contains dependent 3rd-party packages
-      views/              contains view files for the Web application
-      web/                contains the entry script and Web resources
-
-
-
-REQUIREMENTS
-------------
-
-The minimum requirement by this project template that your Web server supports PHP 5.6.0.
-
-
-INSTALLATION
-------------
-
-### Install via Composer
-
-If you do not have [Composer](http://getcomposer.org/), you may install it by following the instructions
-at [getcomposer.org](http://getcomposer.org/doc/00-intro.md#installation-nix).
-
-You can then install this project template using the following command:
+```
+authors
+--------------
+id
+phone
+datetime_first_message
+datetime_last_message
+messages_count
+is_banned
+--------------------------------------------------------
+messages
+--------------
+id
+author_id
+datetime
+content
+is_deleted
+--------------------------------------------------------
+```
 
 ~~~
-composer create-project --prefer-dist yiisoft/yii2-app-basic basic
+/migrations/m200710_190507_authors_messages.php
 ~~~
-
-Now you should be able to access the application through the following URL, assuming `basic` is the directory
-directly under the Web root.
-
-~~~
-http://localhost/basic/web/
-~~~
-
-### Install from an Archive File
-
-Extract the archive file downloaded from [yiiframework.com](http://www.yiiframework.com/download/) to
-a directory named `basic` that is directly under the Web root.
-
-Set cookie validation key in `config/web.php` file to some random secret string:
 
 ```php
-'request' => [
-    // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-    'cookieValidationKey' => '<secret random string goes here>',
-],
+        $this->createTable('{{%authors}}', [
+            'id'                     => $this->primaryKey(),
+            'phone'                  => $this->string(50),
+            'datetime_first_message' => $this->dateTime(),
+            'datetime_last_message'  => $this->dateTime(),
+            'messages_count'         => $this->integer(),
+            'is_banned'              => $this->boolean(),
+        ]);
+
+        $this->createIndex('idx_authors_phone', '{{%authors}}', 'phone');
+
+        $this->createTable('{{%messages}}', [
+            'id'                     => $this->primaryKey(),
+            'author_id'              => $this->integer(),
+            'datetime'               => $this->dateTime(),
+            'content'                => $this->text(),
+            'is_deleted'             => $this->boolean(),
+        ]);
+
+        $this->createIndex('idx_messages_author_id', '{{%messages}}', 'author_id');
 ```
 
-You can then access the application through the following URL:
+### 2. Установка правил маршрутов
 
 ~~~
-http://localhost/basic/web/
+/config/web.php
 ~~~
-
-
-### Install with Docker
-
-Update your vendor packages
-
-    docker-compose run --rm php composer update --prefer-dist
-    
-Run the installation triggers (creating cookie validation code)
-
-    docker-compose run --rm php composer install    
-    
-Start the container
-
-    docker-compose up -d
-    
-You can then access the application through the following URL:
-
-    http://127.0.0.1:8000
-
-**NOTES:** 
-- Minimum required Docker engine version `17.04` for development (see [Performance tuning for volume mounts](https://docs.docker.com/docker-for-mac/osxfs-caching/))
-- The default configuration uses a host-volume in your home directory `.docker-composer` for composer caches
-
-
-CONFIGURATION
--------------
-
-### Database
-
-Edit the file `config/db.php` with real data, for example:
 
 ```php
-return [
-    'class' => 'yii\db\Connection',
-    'dsn' => 'mysql:host=localhost;dbname=yii2basic',
-    'username' => 'root',
-    'password' => '1234',
-    'charset' => 'utf8',
-];
+    'modules' => [
+        'api' => [
+            'class' => 'app\modules\api\Module',
+        ],
+    ],
+    'components' => [
+        'request' => [
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
+        ],
+        'urlManager' => [
+            'enablePrettyUrl' => true,
+            'showScriptName' => false,
+            'rules' => [
+                'api/webhook'=>'api/webhook/index',
+                [
+                    'class'         => 'yii\rest\UrlRule',
+                    'controller'    => ['api/messages','api/authors'],
+                    'pluralize'     => false,
+                ],
+                [
+                    'class'         => 'yii\rest\UrlRule',
+                    'controller'    => 'api/webhook',
+                    'pluralize'     => false,
+                    'extraPatterns' => [
+                        'POST index'  => 'index',
+                    ],
+                ],
+            ],
+        ],
 ```
 
-**NOTES:**
-- Yii won't create the database for you, this has to be done manually before you can access it.
-- Check and edit the other files in the `config/` directory to customize your application as required.
-- Refer to the README in the `tests` directory for information specific to basic application tests.
+### 3 Установка REST контроллеров
 
+~~~
+/modules/api/controllers/MessagesController.php
+~~~
 
-TESTING
--------
+```php
+namespace app\modules\api\controllers;
 
-Tests are located in `tests` directory. They are developed with [Codeception PHP Testing Framework](http://codeception.com/).
-By default there are 3 test suites:
+use app\modules\api\models\Messages;
 
-- `unit`
-- `functional`
-- `acceptance`
-
-Tests can be executed by running
-
+class MessagesController extends \yii\rest\ActiveController
+{
+    public $modelClass = Messages::class;
+}
 ```
-vendor/bin/codecept run
+~~~
+/modules/api/controllers/MessagesController.php
+~~~
+
+```php
+namespace app\modules\api\controllers;
+
+use app\modules\api\models\Authors;
+
+class AuthorsController extends \yii\rest\ActiveController
+{
+    public $modelClass = Authors::class;
+}
 ```
+~~~
+/modules/api/controllers/WebhookController.php
+~~~
 
-The command above will execute unit and functional tests. Unit tests are testing the system components, while functional
-tests are for testing user interaction. Acceptance tests are disabled by default as they require additional setup since
-they perform testing in real browser. 
+```php
+namespace app\modules\api\controllers;
 
+use yii\rest\ActiveController;
+use app\modules\api\models\Messages;
+use app\modules\api\models\Authors;
 
-### Running  acceptance tests
+/**
+ * Default controller for the `api` module
+ */
+class WebhookController extends ActiveController
+{
+    public $modelClass = Messages::class;
 
-To execute acceptance tests do the following:  
+    public function actions(){
+        $actions = parent::actions();
+        unset($actions['index']);
+        return $actions;
+    }
 
-1. Rename `tests/acceptance.suite.yml.example` to `tests/acceptance.suite.yml` to enable suite configuration
+    protected function verbs() {
+        $verbs = parent::verbs();
+        $verbs['index'] = ['POST'];
+        return $verbs;
+    }
 
-2. Replace `codeception/base` package in `composer.json` with `codeception/codeception` to install full featured
-   version of Codeception
+    public function actionIndex(){
 
-3. Update dependencies with Composer 
+        $post=\Yii::$app->request->post();
+        $transaction = \Yii::$app->db->beginTransaction();
+        try {
+            foreach ($post['messages'] as $message){
 
-    ```
-    composer update  
-    ```
+                $_author=Authors::findOne(['phone'=>$message['phone']]);
+                if ($_author){
+                    $_author->datetime_last_message=date('Y-m-d H:i:s');
+                }else{
+                    $_author=new Authors();
+                    $_author->phone=$message['phone'];
+                    $_author->datetime_first_message=date('Y-m-d H:i:s');
+                }
+                $_author->messages_count++;
+                $_author->is_banned=0;
+                $_author->save();
 
-4. Download [Selenium Server](http://www.seleniumhq.org/download/) and launch it:
+                $_message = new Messages();
+                $_message->author_id=$_author->id;
+                $_message->content=$message['message'];
+                $_message->datetime=date('Y-m-d H:i:s');
+                $_message->is_deleted=0;
+                $_message->save();
+            }
+            $transaction->commit();
+            throw new \yii\web\HttpException(200, 'added '.count($post['messages']), 200);
 
-    ```
-    java -jar ~/selenium-server-standalone-x.xx.x.jar
-    ```
+        } catch (\RuntimeException $e) {
+            $transaction->rollBack();
+            throw new \yii\web\HttpException(500, 'not all added', 500);
 
-    In case of using Selenium Server 3.0 with Firefox browser since v48 or Google Chrome since v53 you must download [GeckoDriver](https://github.com/mozilla/geckodriver/releases) or [ChromeDriver](https://sites.google.com/a/chromium.org/chromedriver/downloads) and launch Selenium with it:
-
-    ```
-    # for Firefox
-    java -jar -Dwebdriver.gecko.driver=~/geckodriver ~/selenium-server-standalone-3.xx.x.jar
-    
-    # for Google Chrome
-    java -jar -Dwebdriver.chrome.driver=~/chromedriver ~/selenium-server-standalone-3.xx.x.jar
-    ``` 
-    
-    As an alternative way you can use already configured Docker container with older versions of Selenium and Firefox:
-    
-    ```
-    docker run --net=host selenium/standalone-firefox:2.53.0
-    ```
-
-5. (Optional) Create `yii2_basic_tests` database and update it by applying migrations if you have them.
-
-   ```
-   tests/bin/yii migrate
-   ```
-
-   The database configuration can be found at `config/test_db.php`.
-
-
-6. Start web server:
-
-    ```
-    tests/bin/yii serve
-    ```
-
-7. Now you can run all available tests
-
-   ```
-   # run all available tests
-   vendor/bin/codecept run
-
-   # run acceptance tests
-   vendor/bin/codecept run acceptance
-
-   # run only unit and functional tests
-   vendor/bin/codecept run unit,functional
-   ```
-
-### Code coverage support
-
-By default, code coverage is disabled in `codeception.yml` configuration file, you should uncomment needed rows to be able
-to collect code coverage. You can run your tests and collect coverage with the following command:
-
+        }
+    }
+}
 ```
-#collect coverage for all tests
-vendor/bin/codecept run -- --coverage-html --coverage-xml
-
-#collect coverage only for unit tests
-vendor/bin/codecept run unit -- --coverage-html --coverage-xml
-
-#collect coverage for unit and functional tests
-vendor/bin/codecept run functional,unit -- --coverage-html --coverage-xml
-```
-
-You can see code coverage output under the `tests/_output` directory.
