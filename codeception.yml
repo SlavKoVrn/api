@@ -12,7 +12,11 @@ modules:
     config:
         Yii2:
             configFile: 'config/test.php'
-
+    enabled:                                                
+        - REST:                                             
+            depends: PhpBrowser                             
+            url: http://api/api/                      
+            shortDebugResponse: 300           
 # To enable code coverage:
 #coverage:
 #    #c3_url: http://localhost:8080/index-test.php/
