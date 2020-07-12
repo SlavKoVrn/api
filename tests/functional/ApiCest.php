@@ -5,20 +5,23 @@ class ApiCest
     public function postMessages(\FunctionalTester $I)
     {
         $I->expectTo('добавление сообщений с данными пользователей');
+        $faker = \Faker\Factory::create('ru_RU');
         $messages=[
             [
-                'message'=>'message 1',
-                'phone'=>'+7(101)11-11-11',
+                'message'=>$faker->name,
+                'phone'=>$faker->phoneNumber,
             ],
             [
-                'message'=>'message 2',
-                'phone'=>'+7(202)22-22-22',
+                'message'=>$faker->name,
+                'phone'=>$faker->phoneNumber,
+            ],
+            [
+                'message'=>$faker->name,
+                'phone'=>$faker->phoneNumber,
             ],
         ];
         $I->haveHttpHeader('Content-Type', 'application/json');
-        $I->sendPOST('http://api.kadastrcard.ru/api/webhook', [
-            'messages'=>$messages
-        ]);
+        $I->sendPOST('http://api.kadastrcard.ru/api/webhook', ['messages'=>$messages]);
         $I->seeResponseCodeIs(200);
         $I->seeResponseContainsJson([
             'name'=>'OK',

@@ -11,6 +11,8 @@ use app\modules\api\models\Authors;
  */
 class WebhookController extends ActiveController
 {
+    const MESSAGE_MAX_LENTH = 10000;
+
     public $modelClass = Messages::class;
 
     public function actions(){
@@ -32,24 +34,29 @@ class WebhookController extends ActiveController
         try {
             foreach ($post['messages'] as $message){
 
+                $date = date('Y-m-d H:i:s');
                 $_author=Authors::findOne(['phone'=>$message['phone']]);
                 if ($_author){
-                    $_author->datetime_last_message=date('Y-m-d H:i:s');
+                    $_author->datetime_last_message=$date;
                 }else{
                     $_author=new Authors();
                     $_author->phone=$message['phone'];
-                    $_author->datetime_first_message=date('Y-m-d H:i:s');
+                    $_author->datetime_first_message=$date;
                 }
                 $_author->messages_count++;
                 $_author->is_banned=0;
                 $_author->save();
 
-                $_message = new Messages();
-                $_message->author_id=$_author->id;
-                $_message->content=$message['message'];
-                $_message->datetime=date('Y-m-d H:i:s');
-                $_message->is_deleted=0;
-                $_message->save();
+                $message_length = mb_strlen($message['message']);
+                $_messages_count = ceil($message_length/self::MESSAGE_MAX_LENTH);
+                for ($i=0;$i<$_messages_count;$i++){
+                    $_message = new Messages();
+                    $_message->author_id=$_author->id;
+                    $_message->content=mb_substr($message['message'],$i*self::MESSAGE_MAX_LENTH,self::MESSAGE_MAX_LENTH);
+                    $_message->datetime=$date;
+                    $_message->is_deleted=0;
+                    $_message->save();
+                }
             }
             $transaction->commit();
             throw new \yii\web\HttpException(200, 'added '.count($post['messages']), 200);
